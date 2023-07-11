@@ -18,7 +18,8 @@ async def get_all_users(db: Session = Depends(get_db), country_name: str = None)
     query = db.query(UserModel)
 
     if country_name:
-        query = query.join(CountryModel).filter(CountryModel.name == country_name)
+        query = query.join(CountryModel).filter(
+            CountryModel.name == country_name)
 
     users = query.all()
 
@@ -54,26 +55,54 @@ async def get_books(db: Session = Depends(get_db), user_name: str = None):
     books_by_state = {}
     for book in books:
         state_name = book.state.name
-        if state_name not in books_by_state:
-            books_by_state[state_name] = []
-        books_by_state[state_name].append(book)
-        
-    book_names = [book.name for book in books]
+        books_by_state.setdefault(state_name, []).append(book)
 
     cantidad_books = len(books)
-        
-    sentences = []
-    sentence = f"{user_name} tiene {cantidad_books} libro{'s' if cantidad_books != 1 else ''} en la biblioteca: "
-    sentence += ", ".join(book_names)
-    sentences.append(sentence)
-    
-    for state_name, state_books in books_by_state.items():
-        # book_names = [book.name for book in state_books]
-        cantidad_books_by_state = len(state_books)
-        sentence = f". {cantidad_books_by_state} {'está' if cantidad_books_by_state == 1 else 'están'} en el estado '{state_name}'."
-        sentences.append(sentence)
+
+    sentence = f"{user_name} tiene {cantidad_books} libro{'s' if cantidad_books != 1 else ''} en la biblioteca: {', '.join([book.name for book in books])}"
+    sentences = [sentence]
+
+    sentences.extend([f". {len(state_books)} {'está' if len(state_books) == 1 else 'están'} en el estado '{state_name}'." for state_name, state_books in books_by_state.items()])
 
     return " ".join(sentences)
+
+
+
+
+
+
+
+# async def get_books(db: Session = Depends(get_db), user_name: str = None):
+#     query = db.query(BookModel)
+#     if user_name:
+#         query = query.join(UserModel).filter(UserModel.name == user_name)
+#     books = query.all()
+
+#     books_by_state = {}
+#     for book in books:
+#         state_name = book.state.name
+#         if state_name not in books_by_state:
+#             books_by_state[state_name] = []
+#         books_by_state[state_name].append(book)
+
+#     book_names = [book.name for book in books]
+
+#     cantidad_books = len(books)
+
+#     sentences = []
+#     sentence = f"{user_name} tiene {cantidad_books} libro{'s' if cantidad_books != 1 else ''} en la biblioteca: {', '.join(book_names)}"
+#     sentences.append(sentence)
+
+#     for state_name, state_books in books_by_state.items():
+#         cantidad_books_by_state = len(state_books)
+#         sentence = f". {cantidad_books_by_state} {'está' if cantidad_books_by_state == 1 else 'están'} en el estado '{state_name}'."
+#         sentences.append(sentence)
+
+#     return " ".join(sentences)
+
+
+
+
 
 # hacer una segunda ruta que me traiga los libros por usuario, la respuesta 'rafa tiene 3 libros en la biblioteca: 'nombre1', 'nombre2', 'nombre3'. 2 de ellos estan prestados'
 # posibles estados: prestado, devuelto
